@@ -3,9 +3,11 @@
 # 🔧 OpenWork v12 — Universal MCP Workspace
 
 [![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
-[![MCP](https://img.shields.io/badge/MCP-16%20Servers-00E5FF?style=flat-square)](https://modelcontextprotocol.io)
-[![IDE](https://img.shields.io/badge/Works%20On-Any%20IDE-B026FF?style=flat-square)]()
+[![CI](https://github.com/m4stanuj/openwork/actions/workflows/ci.yml/badge.svg)](https://github.com/m4stanuj/openwork/actions)
+[![Release](https://img.shields.io/github/v/release/m4stanuj/openwork?style=flat-square&color=B026FF)](https://github.com/m4stanuj/openwork/releases)
+[![Stars](https://img.shields.io/github/stars/m4stanuj/openwork?style=flat-square&color=yellow)](https://github.com/m4stanuj/openwork/stargazers)
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
+[![MCP](https://img.shields.io/badge/MCP-16%20Servers-00E5FF?style=flat-square)](https://modelcontextprotocol.io)
 
 **One brain. Every IDE. The MCP workspace layer that makes any AI coding assistant dramatically smarter.**
 
