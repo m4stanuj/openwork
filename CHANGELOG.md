@@ -2,6 +2,18 @@
 
 All notable changes to OpenWork are documented here.
 
+## [12.3.1] — 2026-05-29
+
+### Added
+- Packaging metadata and `openwork-config` CLI entry point
+- `.env.template` matching the README install flow
+- Windows installer shims: `install.ps1` and `INSTALL_SKILLS.bat`
+- CI test execution in addition to syntax linting
+
+### Fixed
+- Config generator now writes UTF-8 JSON and resolves MCP script paths
+- README install commands now point to files present in the repo
+
 ## [12.3.0] — 2026-04-15
 
 ### Added

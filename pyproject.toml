@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "openwork"
+version = "12.3.1"
+description = "Universal MCP workspace configuration layer for AI coding assistants."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Anuj / M4ST" }]
+dependencies = []
+
+[project.scripts]
+openwork-config = "config_generator:main"
+
+[project.urls]
+Homepage = "https://github.com/m4stanuj/openwork"
+Repository = "https://github.com/m4stanuj/openwork"
+
+[tool.setuptools]
+py-modules = ["config_generator"]

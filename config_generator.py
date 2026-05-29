@@ -81,10 +81,11 @@ def generate_config(ide: str, mcp_dir: str, output_dir: str = ".") -> str:
         raise ValueError(f"Unknown IDE: {ide}. Supported: {list(IDE_CONFIG_MAP.keys())}")
     
     config = IDE_CONFIG_MAP[ide]
+    mcp_root = Path(mcp_dir).expanduser().resolve()
     servers = {}
     
     for name, server in MCP_SERVERS.items():
-        script_path = os.path.join(mcp_dir, server["script"])
+        script_path = str(mcp_root / server["script"])
         servers[name] = {
             "command": server["command"],
             "args": [script_path],
@@ -103,13 +104,13 @@ def generate_config(ide: str, mcp_dir: str, output_dir: str = ".") -> str:
     else:
         output = {"servers": servers}
     
-    output_path = os.path.join(output_dir, config["filename"])
-    os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
+    output_path = Path(output_dir) / config["filename"]
+    output_path.parent.mkdir(parents=True, exist_ok=True)
     
-    with open(output_path, "w") as f:
+    with output_path.open("w", encoding="utf-8") as f:
         json.dump(output, f, indent=2)
     
-    return output_path
+    return str(output_path)
 
 
 def _get_env_vars() -> dict:
@@ -131,9 +132,14 @@ def _get_provider_config() -> list:
     ]
 
 
-if __name__ == "__main__":
+def main():
+    """CLI entry point for generating an OpenWork config."""
     import sys
     ide = sys.argv[1] if len(sys.argv) > 1 else "cursor"
     mcp_dir = sys.argv[2] if len(sys.argv) > 2 else "./mcps"
     path = generate_config(ide, mcp_dir)
     print(f"Generated {ide} config: {path}")
+
+
+if __name__ == "__main__":
+    main()

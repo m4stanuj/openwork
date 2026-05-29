@@ -1,7 +1,9 @@
 """
 Tests for OpenWork Config Generator
 """
-from config_generator import IDE_CONFIG_MAP, MCP_SERVERS
+import json
+
+from config_generator import IDE_CONFIG_MAP, MCP_SERVERS, generate_config
 
 
 def test_all_ides_have_config():
@@ -28,3 +30,13 @@ def test_no_port_conflicts():
 def test_server_count():
     """Should have 5 core MCP servers."""
     assert len(MCP_SERVERS) == 5
+
+
+def test_generate_config_writes_valid_cursor_json(tmp_path):
+    """Generator should create a usable MCP config file."""
+    output_path = generate_config("cursor", "./mcps", str(tmp_path))
+    data = json.loads((tmp_path / ".cursor" / "mcp.json").read_text(encoding="utf-8"))
+
+    assert output_path.endswith(".cursor/mcp.json") or output_path.endswith(".cursor\\mcp.json")
+    assert "mcpServers" in data
+    assert set(data["mcpServers"]) == set(MCP_SERVERS)
