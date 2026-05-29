@@ -19,7 +19,9 @@
 
 ## 🧠 Overview
 
-OpenWork v12 is a **production-grade MCP (Model Context Protocol) workspace** that plugs into any AI coding environment and transforms it into a fully autonomous agent. The same SOUL — identical behavior, identical capabilities — regardless of which IDE you're using.
+OpenWork v12 is the **MCP workspace/control-plane layer** for the M4ST ecosystem. It provides portable IDE configuration, installer shims, and the workspace conventions used by the larger MAST operator stack.
+
+For the complete operator system with MCP server implementations, skills, agents, and SOUL identity, see [MAST](https://github.com/m4stanuj/MAST).
 
 ```
 ┌──────────────────────────────────────────────────────────┐
@@ -44,6 +46,16 @@ OpenWork v12 is a **production-grade MCP (Model Context Protocol) workspace** th
 │         └──────────────────────────────────┘            │
 └──────────────────────────────────────────────────────────┘
 ```
+
+## M4ST Ecosystem
+
+| Repo | Role |
+|------|------|
+| [MAST](https://github.com/m4stanuj/MAST) | Flagship AI operator stack |
+| [mast-llm-router](https://github.com/m4stanuj/mast-llm-router) | Task-aware LLM fallback router |
+| [semantic-cache-engine](https://github.com/m4stanuj/semantic-cache-engine) | Standalone semantic cache module |
+| [openwork](https://github.com/m4stanuj/openwork) | This repo: MCP workspace/config layer |
+| [m4stclaw-legacy-archive](https://github.com/m4stanuj/m4stclaw-legacy-archive) | Historical archive and lineage |
 
 ## 🔌 MCP Servers
 

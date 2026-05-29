@@ -9,10 +9,12 @@ All notable changes to OpenWork are documented here.
 - `.env.template` matching the README install flow
 - Windows installer shims: `install.ps1` and `INSTALL_SKILLS.bat`
 - CI test execution in addition to syntax linting
+- M4ST ecosystem links in README
 
 ### Fixed
 - Config generator now writes UTF-8 JSON and resolves MCP script paths
 - README install commands now point to files present in the repo
+- README positioning now clarifies OpenWork as the MCP workspace/control-plane layer for MAST
 
 ## [12.3.0] — 2026-04-15
 
