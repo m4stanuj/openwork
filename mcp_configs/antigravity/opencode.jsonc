@@ -1,0 +1,40 @@
+// Antigravity — MCP config (JSONC, opencode-compatible).
+// Place at  ~/.antigravity/opencode.jsonc  (merge the "mcp" section).
+// Keep in sync with the antigravity-migration repo.
+// Generate automatically:  python setup_universal.py --mcp-dir <MCP_DIR> --client antigravity
+{
+  "$schema": "https://opencode.ai/config.schema.json",
+
+  "mcp": {
+    "memory": {
+      "type": "local",
+      "command": "python",
+      "args": ["${MCP_DIR}/memory_mcp.py"],
+      "description": "3-tier memory (core/recall/archival)"
+    },
+    "shell": {
+      "type": "local",
+      "command": "python",
+      "args": ["${MCP_DIR}/shell_mcp.py"],
+      "description": "Safe shell execution"
+    },
+    "file": {
+      "type": "local",
+      "command": "python",
+      "args": ["${MCP_DIR}/file_mcp.py"],
+      "description": "File read/write/search/diff"
+    },
+    "research": {
+      "type": "local",
+      "command": "python",
+      "args": ["${MCP_DIR}/research_mcp.py"],
+      "description": "Multi-depth web search + extraction"
+    },
+    "browser": {
+      "type": "local",
+      "command": "python",
+      "args": ["${MCP_DIR}/browser_mcp.py"],
+      "description": "Playwright browser automation"
+    }
+  }
+}

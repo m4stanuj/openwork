@@ -1,0 +1,10 @@
+{
+  "name": "m4st-openwork",
+  "version": "1.0.0",
+  "description": "M4ST / OpenWork MCP servers — memory, shell, file, research, browser. Thin Claude Code plugin layer over the standard MCP servers.",
+  "author": "M4ST",
+  "license": "MIT",
+  "repository": "https://github.com/m4stanuj/openwork",
+  "commands": {},
+  "agents": {}
+}

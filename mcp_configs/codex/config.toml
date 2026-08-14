@@ -1,0 +1,39 @@
+# Codex — native MCP config (TOML).
+# Merge these [mcp_servers.*] blocks into  ~/.codex/config.toml
+# (or run:  python setup_universal.py --mcp-dir <MCP_DIR> --client codex)
+# ${MCP_DIR} = absolute path to the folder containing the MCP server .py scripts.
+
+[mcp_servers.memory]
+command = "python"
+args = ["${MCP_DIR}/memory_mcp.py"]
+
+[mcp_servers.memory.env]
+MAST_CONFIG = "${MCP_DIR}"
+
+[mcp_servers.shell]
+command = "python"
+args = ["${MCP_DIR}/shell_mcp.py"]
+
+[mcp_servers.shell.env]
+MAST_CONFIG = "${MCP_DIR}"
+
+[mcp_servers.file]
+command = "python"
+args = ["${MCP_DIR}/file_mcp.py"]
+
+[mcp_servers.file.env]
+MAST_CONFIG = "${MCP_DIR}"
+
+[mcp_servers.research]
+command = "python"
+args = ["${MCP_DIR}/research_mcp.py"]
+
+[mcp_servers.research.env]
+MAST_CONFIG = "${MCP_DIR}"
+
+[mcp_servers.browser]
+command = "python"
+args = ["${MCP_DIR}/browser_mcp.py"]
+
+[mcp_servers.browser.env]
+MAST_CONFIG = "${MCP_DIR}"
