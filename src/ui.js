@@ -1,3 +1,10 @@
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 // Lightweight ANSI formatting helper (Zero-dependency)
 const c = {
   reset: "\x1b[0m",
@@ -12,10 +19,28 @@ const c = {
   gray: "\x1b[90m"
 };
 
+// Strip ANSI escape codes for accurate width calculation
+function stripAnsi(str) {
+  return String(str).replace(/\x1b\[[0-9;]*m/g, "");
+}
+
+// Read version from package.json (single source of truth)
+function getVersion() {
+  try {
+    const pkgPath = path.join(__dirname, "..", "package.json");
+    const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf-8"));
+    return pkg.version || "0.0.0";
+  } catch {
+    return "0.0.0";
+  }
+}
+
 export const ui = {
+  version: getVersion(),
+
   banner() {
     console.log(`
-${c.cyan}${c.bold}⚡ OpenWork${c.reset} ${c.dim}v0.1.0${c.reset}
+${c.cyan}${c.bold}⚡ OpenWork${c.reset} ${c.dim}v${this.version}${c.reset}
 ${c.gray}Universal MCP Workspace & Control Plane for AI IDEs${c.reset}
 ${c.gray}───────────────────────────────────────────────────${c.reset}`);
   },
@@ -31,13 +56,19 @@ ${c.gray}───────────────────────�
   error(msg) {
     console.error(`${c.red}✖${c.reset} ${c.bold}${msg}${c.reset}`);
   },
+  debug(msg, verbose = false) {
+    if (verbose) {
+      console.log(`${c.gray}  ▸ ${msg}${c.reset}`);
+    }
+  },
   badge(text, color = "cyan") {
     return `${c[color] || c.cyan}[${text}]${c.reset}`;
   },
   table(headers, rows) {
+    // ANSI-aware column width calculation (strips escape codes for measurement)
     const colWidths = headers.map((h, i) => {
-      const maxRow = Math.max(...rows.map(r => (r[i] ? String(r[i]).length : 0)));
-      return Math.max(h.length, maxRow) + 2;
+      const maxRow = Math.max(...rows.map(r => (r[i] ? stripAnsi(String(r[i])).length : 0)));
+      return Math.max(stripAnsi(h).length, maxRow) + 2;
     });
 
     const headerLine = headers.map((h, i) => h.padEnd(colWidths[i])).join("");
@@ -46,7 +77,13 @@ ${c.gray}───────────────────────�
     console.log(c.bold + headerLine + c.reset);
     console.log(c.gray + sepLine + c.reset);
     rows.forEach(r => {
-      console.log(r.map((cell, i) => String(cell || "").padEnd(colWidths[i])).join(""));
+      const line = r.map((cell, i) => {
+        const str = String(cell || "");
+        const visibleLen = stripAnsi(str).length;
+        const padding = Math.max(0, colWidths[i] - visibleLen);
+        return str + " ".repeat(padding);
+      }).join("");
+      console.log(line);
     });
   }
 };
