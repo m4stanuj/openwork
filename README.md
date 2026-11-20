@@ -112,7 +112,7 @@ npx @m4stanuj/openwork sync
 | `openwork init` | Generates a starter `openwork.json` with recommended tools |
 | `openwork detect` | Scans OS and reports installed AI IDE configuration paths |
 | `openwork sync` | Syncs `openwork.json` to all active IDE config targets |
-| `openwork sync --dry-run` | Previews changes without writing to disk |
+| `openwork sync --dry-run` | Shows added, updated, and unchanged servers per IDE without printing settings or writing files |
 | `openwork sync --target <id>` | Target a specific client (e.g. `claude-desktop`) |
 | `openwork diff` | Compare master config vs each IDE's current state |
 | `openwork diff --verbose` | Show detailed missing/extra server breakdown |

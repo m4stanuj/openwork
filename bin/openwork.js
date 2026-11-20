@@ -53,17 +53,26 @@ async function main() {
         ui.debug(`Config: openwork.json | Target filter: ${targetFilter || "all"}`, verbose);
         const results = syncConfigs({ dryRun: isDryRun, targetFilter });
         console.log("");
-        const headers = ["Target IDE", "Status", "Servers Injected", "File Path"];
+        if (results.length === 0) {
+          ui.info("No configured targets match this sync.");
+          break;
+        }
+        const headers = ["Target IDE", "Status", "Add", "Update", "Unchanged", "File Path"];
         const rows = results.map(r => [
           r.name,
           r.status === "SYNCED" ? ui.badge("SYNCED", "green") : ui.badge(r.status, "yellow"),
-          r.serverCount,
+          r.changes.added,
+          r.changes.updated,
+          r.changes.unchanged,
           r.path
         ]);
         ui.table(headers, rows);
         console.log("");
-        if (!isDryRun) {
-          ui.success("All AI IDEs synchronized successfully with zero drift!");
+        if (isDryRun) {
+          ui.info("Preview complete. No files were written.");
+        } else {
+          const updated = new Set(results.filter(r => r.status === "SYNCED").map(r => r.path));
+          ui.success(updated.size ? `Updated ${updated.size} config file(s).` : "Selected configs are already in sync.");
         }
       } catch (err) {
         ui.error(err.message);

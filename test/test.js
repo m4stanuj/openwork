@@ -54,6 +54,12 @@ try {
   const preview = syncConfigs({ dryRun: true });
   assert.strictEqual(preview.length, 2);
   assert(preview.every(result => result.status === "DRY-RUN (Simulated)"));
+  assert.deepStrictEqual(preview.find(result => result.path.endsWith(cursorConfig)).changes, {
+    added: 0, updated: 1, unchanged: 0
+  });
+  assert.deepStrictEqual(preview.find(result => result.path.endsWith(windsurfConfig)).changes, {
+    added: 1, updated: 0, unchanged: 0
+  });
   assert.strictEqual(fs.readFileSync(cursorConfig, "utf-8"), previousCursor);
   assert(!fs.existsSync(cursorBackup));
   assert(!fs.existsSync(".windsurf"));
@@ -102,6 +108,19 @@ try {
   });
   assert.strictEqual(fs.readFileSync(cursorBackup, "utf-8"), previousCursor);
   assert(!fs.existsSync(`${windsurfConfig}.bak`));
+  const originalModifyTime = fs.statSync(cursorConfig, { bigint: true }).mtimeNs;
+  const repeated = syncConfigs();
+  assert(repeated.every(result => result.status === "UNCHANGED"));
+  assert(repeated.every(result => result.changes.unchanged === 1));
+  assert.strictEqual(fs.statSync(cursorConfig, { bigint: true }).mtimeNs, originalModifyTime);
+  assert.strictEqual(fs.readFileSync(cursorBackup, "utf-8"), previousCursor);
+  const previewCli = spawnSync(process.execPath, [cliPath, "sync", "--dry-run"], {
+    cwd: testDir,
+    encoding: "utf-8"
+  });
+  assert.strictEqual(previewCli.status, 0);
+  assert.match(previewCli.stdout, /Unchanged/);
+  assert(!previewCli.stdout.includes("resolved-value"));
   if (process.platform !== "win32") {
     assert.strictEqual(fs.statSync(cursorConfig).mode & 0o777, 0o640 & ~process.umask());
     assert.strictEqual(fs.statSync(windsurfConfig).mode & 0o777, 0o600 & ~process.umask());
