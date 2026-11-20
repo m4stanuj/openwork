@@ -5,6 +5,16 @@ import { isDeepStrictEqual } from "node:util";
 import { getPlatformPaths } from "./detect.js";
 import { loadEnvFile, resolveEnvVars } from "./env.js";
 
+function canonicalDirectory(directory) {
+  try {
+    return fs.realpathSync.native(directory);
+  } catch (error) {
+    const parent = path.dirname(directory);
+    if (error.code !== "ENOENT" || parent === directory) throw error;
+    return path.join(canonicalDirectory(parent), path.basename(directory));
+  }
+}
+
 function targetStat(configPath) {
   try {
     const stat = fs.lstatSync(configPath, { bigint: true });
@@ -109,7 +119,9 @@ export function syncConfigs(options = {}) {
 
   // Validate every selected target before writing configs or backups.
   const updates = targetsToSync.map(target => {
-    const { stat, raw, config } = readTargetConfig(target.configPath);
+    // Resolve directory aliases while still validating the file itself with lstat.
+    const configPath = path.join(canonicalDirectory(path.dirname(target.configPath)), path.basename(target.configPath));
+    const { stat, raw, config } = readTargetConfig(configPath);
     const existing = config.mcpServers ?? {};
     const changes = { added: 0, updated: 0, unchanged: 0 };
     for (const [name, server] of Object.entries(resolvedServers)) {
@@ -128,13 +140,12 @@ export function syncConfigs(options = {}) {
         ...resolvedServers
       }
     };
-    return { target, stat, raw, changes, contents: JSON.stringify(updatedConfig, null, 2) };
+    return { target, configPath, stat, raw, changes, contents: JSON.stringify(updatedConfig, null, 2) };
   });
 
   const serverCount = Object.keys(resolvedServers).length;
   const syncedPaths = new Set();
-  return updates.map(({ target, stat, raw, changes, contents }) => {
-    const configPath = target.configPath;
+  return updates.map(({ target, configPath, stat, raw, changes, contents }) => {
     const hasChanges = changes.added > 0 || changes.updated > 0;
     if (!dryRun && hasChanges && !syncedPaths.has(configPath)) {
       fs.mkdirSync(path.dirname(configPath), { recursive: true });

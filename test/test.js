@@ -177,9 +177,13 @@ try {
   const masterConfig = JSON.parse(fs.readFileSync("openwork.json", "utf-8"));
   masterConfig.targets = ["cursor-global", "cursor-workspace"];
   fs.writeFileSync("openwork.json", JSON.stringify(masterConfig));
+  const homeAlias = path.join(testDir, "home-alias");
+  fs.symlinkSync(testDir, homeAlias, process.platform === "win32" ? "junction" : "dir");
   try {
-    os.homedir = () => testDir;
-    assert.strictEqual(syncConfigs().length, 2);
+    os.homedir = () => homeAlias;
+    const sharedTargets = syncConfigs();
+    assert.strictEqual(sharedTargets.length, 2);
+    assert.strictEqual(new Set(sharedTargets.map(target => target.path)).size, 1);
   } finally {
     os.homedir = originalHomedir;
   }
