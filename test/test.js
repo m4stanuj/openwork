@@ -130,11 +130,12 @@ try {
   fs.writeFileSync(".env", "OPENWORK_FIXTURE_VALUE=new-value\n");
   const cursorOnly = { targetFilter: "cursor-workspace", createBackup: false };
   const previousContents = fs.readFileSync(cursorConfig, "utf-8");
+  const configDirectory = fs.realpathSync.native(path.dirname(cursorConfig));
   const originalRename = fs.renameSync;
   try {
     fs.renameSync = (source, destination) => {
-      assert.strictEqual(path.resolve(destination), path.resolve(cursorConfig));
-      assert.strictEqual(path.resolve(path.dirname(source)), path.resolve(".cursor"));
+      assert.strictEqual(destination, path.join(configDirectory, path.basename(cursorConfig)));
+      assert.strictEqual(path.dirname(source), configDirectory);
       const updated = JSON.parse(fs.readFileSync(source, "utf-8"));
       assert.deepStrictEqual(updated.mcpServers.fixture.args, ["new-value"]);
       assert.strictEqual(fs.readFileSync(cursorConfig, "utf-8"), previousContents);
