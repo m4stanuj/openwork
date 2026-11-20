@@ -1,8 +1,79 @@
 import fs from "fs";
 import path from "path";
+import { randomUUID } from "crypto";
 import { getPlatformPaths } from "./detect.js";
 import { loadEnvFile, resolveEnvVars } from "./env.js";
-import { ui } from "./ui.js";
+
+function targetStat(configPath) {
+  try {
+    const stat = fs.lstatSync(configPath, { bigint: true });
+    if (!stat.isFile()) {
+      throw new Error(`Expected a regular config file at ${configPath}.`);
+    }
+    return stat;
+  } catch (error) {
+    if (error.code === "ENOENT") return null;
+    throw error;
+  }
+}
+
+function readTargetConfig(configPath) {
+  const stat = targetStat(configPath);
+  if (!stat) return { stat, raw: null, config: {} };
+
+  const raw = fs.readFileSync(configPath);
+  let config;
+  try {
+    const decoder = new TextDecoder("utf-8", { fatal: true, ignoreBOM: true });
+    config = JSON.parse(decoder.decode(raw));
+  } catch {
+    throw new Error(`Invalid JSON in target config at ${configPath}.`);
+  }
+  if (config === null || typeof config !== "object" || Array.isArray(config)) {
+    throw new Error(`Expected a JSON object in target config at ${configPath}.`);
+  }
+  const { mcpServers } = config;
+  if (mcpServers != null && (typeof mcpServers !== "object" || Array.isArray(mcpServers))) {
+    throw new Error(`Expected an mcpServers object in target config at ${configPath}.`);
+  }
+  return { stat, raw, config };
+}
+
+function checkTargetUnchanged(configPath, original) {
+  const current = targetStat(configPath);
+  if ((!current && !original) || (current && original &&
+      current.dev === original.dev && current.ino === original.ino &&
+      current.size === original.size && current.mtimeNs === original.mtimeNs &&
+      current.ctimeNs === original.ctimeNs)) {
+    return;
+  }
+  throw new Error(`Target config changed during sync at ${configPath}. Run sync again.`);
+}
+
+function writeAtomic(filePath, contents, beforeReplace, mode) {
+  const tempPath = path.join(path.dirname(filePath), `.openwork-${randomUUID()}.tmp`);
+  const fd = fs.openSync(tempPath, "wx", 0o600);
+  try {
+    try {
+      fs.writeFileSync(fd, contents);
+      if (mode !== undefined && process.platform !== "win32") {
+        fs.fchmodSync(fd, mode);
+      }
+      fs.fsyncSync(fd);
+    } finally {
+      fs.closeSync(fd);
+    }
+    beforeReplace();
+    fs.renameSync(tempPath, filePath);
+  } catch (error) {
+    try {
+      fs.unlinkSync(tempPath);
+    } catch {
+      // Preserve the original write failure.
+    }
+    throw error;
+  }
+}
 
 export function loadMasterConfig(configPath = path.join(process.cwd(), "openwork.json")) {
   if (!fs.existsSync(configPath)) {
@@ -35,60 +106,42 @@ export function syncConfigs(options = {}) {
     return activeTargetIds.includes(t.id);
   });
 
-  const results = [];
-
-  for (const target of targetsToSync) {
-    const targetDir = path.dirname(target.configPath);
-    let currentConfig = {};
-
-    if (fs.existsSync(target.configPath)) {
-      try {
-        currentConfig = JSON.parse(fs.readFileSync(target.configPath, "utf-8"));
-      } catch (err) {
-        currentConfig = {};
-      }
-    }
-
-    // Merge mcpServers into the client config
+  // Validate every selected target before writing configs or backups.
+  const updates = targetsToSync.map(target => {
+    const { stat, raw, config } = readTargetConfig(target.configPath);
     const updatedConfig = {
-      ...currentConfig,
+      ...config,
       mcpServers: {
-        ...(currentConfig.mcpServers || {}),
+        ...config.mcpServers,
         ...resolvedServers
       }
     };
+    return { target, stat, raw, contents: JSON.stringify(updatedConfig, null, 2) };
+  });
 
-    if (dryRun) {
-      results.push({
-        name: target.name,
-        path: target.configPath,
-        status: "DRY-RUN (Simulated)",
-        serverCount: Object.keys(resolvedServers).length
-      });
-      continue;
+  const serverCount = Object.keys(resolvedServers).length;
+  const syncedPaths = new Set();
+  return updates.map(({ target, stat, raw, contents }) => {
+    const configPath = target.configPath;
+    if (!dryRun && !syncedPaths.has(configPath)) {
+      fs.mkdirSync(path.dirname(configPath), { recursive: true });
+      const beforeReplace = () => {
+        checkTargetUnchanged(configPath, stat);
+        if (stat) fs.accessSync(configPath, fs.constants.W_OK);
+      };
+      if (createBackup && stat) {
+        writeAtomic(`${configPath}.bak`, raw, beforeReplace);
+      }
+      const mode = stat ? Number(stat.mode & 0o777n) : undefined;
+      writeAtomic(configPath, contents, beforeReplace, mode);
+      syncedPaths.add(configPath);
     }
 
-    // Create target dir if it doesn't exist
-    if (!fs.existsSync(targetDir)) {
-      fs.mkdirSync(targetDir, { recursive: true });
-    }
-
-    // Backup existing
-    if (createBackup && fs.existsSync(target.configPath)) {
-      const backupPath = `${target.configPath}.bak`;
-      fs.copyFileSync(target.configPath, backupPath);
-    }
-
-    // Write file
-    fs.writeFileSync(target.configPath, JSON.stringify(updatedConfig, null, 2), "utf-8");
-
-    results.push({
+    return {
       name: target.name,
-      path: target.configPath,
-      status: "SYNCED",
-      serverCount: Object.keys(resolvedServers).length
-    });
-  }
-
-  return results;
+      path: configPath,
+      status: dryRun ? "DRY-RUN (Simulated)" : "SYNCED",
+      serverCount
+    };
+  });
 }
